@@ -58,6 +58,7 @@ group :test do
   gem 'rubocop-faker'
   gem 'rubocop'
   gem 'selenium-webdriver'
+  gem 'sprockets-rails'
 end
 
 group :production do
