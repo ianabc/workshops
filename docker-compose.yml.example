@@ -39,9 +39,9 @@ services:
     volumes:
       - ./:/home/app/workshops
       - ./entrypoint.sh:/sbin/entrypoint.sh
-      - /Users/brent/rails/ssh-keys:/root/.ssh
       - rubygems:/usr/local/rvm/gems
       - rubygems:/home/app/workshops/vendor/cache
+      #- /Users/brent/rails/ssh-keys:/root/.ssh
     links:
       - db
     environment:

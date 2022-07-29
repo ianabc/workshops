@@ -520,6 +520,7 @@ DEPENDENCIES
   jquery-turbolinks
   listen
   mailgun-ruby
+  mimemagic
   momentjs-rails
   newrelic_rpm
   paper_trail
@@ -560,4 +561,4 @@ DEPENDENCIES
   wkhtmltopdf-binary
 
 BUNDLED WITH
-   2.2.31
+   2.3.19

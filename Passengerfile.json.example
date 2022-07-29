@@ -5,5 +5,5 @@
   "daemonize": false,
   "user": "app",
   "ssl": false,
-  "nginx_config_template": "/home/app/workshops/nginx.conf.erb",
+  "nginx_config_template": "/home/app/workshops/nginx.conf.erb"
 }

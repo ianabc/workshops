@@ -5,6 +5,8 @@ echo
 echo "Welcome to OS:"
 uname -v
 cat /etc/issue
+sed -i -e 's/mesg n .*true/tty -s \&\& mesg n/g' ~/.profile
+
 
 echo
 echo "Setting system timezone..."
@@ -16,71 +18,99 @@ rm /etc/timezone
 rm /etc/localtime
 dpkg-reconfigure --frontend noninteractive tzdata
 
-# First-time run only
-# echo
-# echo "Create gemset..."
-# gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
-# /usr/bin/curl -sSL https://get.rvm.io | bash -s stable
-# /usr/local/rvm/bin/rvm gemset create ruby-2.6.2
-# /usr/local/rvm/bin/rvm gemset use ruby-2.6.2@global
-# /usr/local/rvm/bin/rvm cleanup all
-# /usr/local/rvm/bin/rvm reload
-# su - app -c "yarn install"
-# su - app -c "yarn add webpack-cli -D"
+echo
+echo "Ruby version:"
+ruby -v
 
-# echo
-# echo "Installing latest bundler..."
-# /usr/local/rvm/bin/rvm-exec 2.6.2 gem install bundler
-# /usr/local/rvm/bin/rvm-exec 2.6.2 bundle update --bundler
-# /usr/local/rvm/bin/rvm-exec 2.6.2 gem update --system
-# /usr/local/rvm/bin/rvm-exec 2.6.2 gem install rubygems-bundler
+echo
+echo "Node version:"
+node --version
 
+echo
+echo "Yarn version:"
+yarn --version
+
+echo
+echo "Installing latest bundler..."
+/usr/local/rvm/bin/rvm-exec 2.7.6 gem install bundler
+# /usr/local/rvm/bin/rvm-exec 2.7.4 bundle _2.1.4_ update --bundler
+# /usr/local/rvm/bin/rvm-exec 2.7.4 gem update --system
+# /usr/local/rvm/bin/rvm-exec 2.7.4 gem install rubygems-bundler
+
+# when updating Rails
 # echo
 # echo "Bundle update rails..."
-# RAILS_ENV=development /usr/local/rvm/bin/rvm-exec 2.6.2 bundle update rails
+# RAILS_ENV=production /usr/local/rvm/bin/rvm-exec 2.7.4 bundle update rails
 
+
+echo
+echo "Bundle install..."
+RAILS_ENV=production /usr/local/rvm/bin/rvm-exec 2.7.6 bundle install
+
+# updates gems to latest minor versions
 # echo
-# echo "Bundle install..."
-# RAILS_ENV=development /usr/local/rvm/bin/rvm-exec 2.6.2 bundle install
+# echo "Bundle update..."
+# RAILS_ENV=production /usr/local/rvm/bin/rvm-exec 2.7.4 bundle update
 
-echo
-echo "Bundle update..."
-RAILS_ENV=development /usr/local/rvm/bin/rvm-exec 2.6.2 bundle update
-
-echo
-echo "Running migrations..."
-rake db:migrate RAILS_ENV=development
-rake db:migrate RAILS_ENV=test
-# rake db:migrate RAILS_ENV=production
-
-if [ -e lib/tasks/ws.rake ]; then
-  # Default settings
+if [ "$(ls -A $GEM_HOME/gems)" ]; then
   echo
-  echo "Adding default Settings..."
-  rake ws:init_settings
-
+  echo "Gems not found in $GEM_HOME!"
   echo
-  echo "Creating admins..."
-  rake ws:create_admins RAILS_ENV=development
+  exit
 fi
 
 echo
 echo "Changing to non-root file permissions..."
-chown -R app:app /usr/local/rvm/gems
+chown app:app -R /usr/local/rvm/gems
 if [ ! -e /home/app/workshops/tmp ]; then
- mkdir -p /home/app/workshops/tmp
- mkdir -p /home/app/workshops/vendor/cache
+  mkdir /home/app/workshops/tmp
+  mkdir -p /home/app/workshops/vendor/cache
 fi
-chown -R app:app /home/app/workshops
+chown app:app -R /home/app/workshops
+
+
+# # Default settings
+# echo
+# echo "Adding default Settings..."
+# rake ws:init_settings
+
+# echo
+# echo "Creating admins..."
+# if [ -e lib/tasks/birs.rake ]; then
+#   rake birs:create_admin RAILS_ENV=production
+# else
+#   rake ws:create_admins RAILS_ENV=production
+# fi
+
+
+echo
+echo "Running migrations..."
+#rake db:migrate RAILS_ENV=production
+/usr/local/rvm/bin/rvm-exec 2.7.6 bundle exec rails db:migrate RAILS_ENV=production
+
+# only used in dev environments
+# rake db:migrate RAILS_ENV=test
+
+echo
+echo "Checking for WebPacker..."
+if [ ! -e /home/app/workshops/bin/webpack ]; then
+  echo "Installing webpacker..."
+  #RAILS_ENV=production /usr/local/rvm/bin/rvm-exec 2.7.4 bundle exec rails webpacker:install
+  RAILS_ENV=production /usr/local/rvm/bin/rvm-exec 2.7.6 bundle exec rails webpacker:install
+  echo "Done!"
+  echo
+fi
 
 echo
 echo "Compiling Assets..."
-su - app -c "yarn add webpack-cli -D"
-su - app -c yarn
-su - app -c "yarn upgrade --latest"
-su - app -c "cd /home/app/workshops; RAILS_ENV=development SECRET_KEY_BASE=token bundle exec rake assets:precompile --trace"
-su - app -c yarn
+su - app -c "cd /home/app/workshops; yarn install" # --latest"
+su - app -c "cd /home/app/workshops; yarn upgrade"
+su - app -c "cd /home/app/workshops; RAILS_ENV=production SECRET_KEY_BASE=token bundle exec rake assets:precompile --trace"
+su - app -c "cd /home/app/workshops; yarn"
 
 echo
+echo "Launching webpack-dev-server..."
+su - app -c "ruby /home/app/workshops/bin/webpack-dev-server &"
+echo
 echo "Starting web server..."
-bundle exec passenger start
+/usr/local/rvm/bin/rvm-exec 2.7.6 bundle exec passenger start --min-instances 2
