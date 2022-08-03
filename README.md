@@ -202,8 +202,97 @@ This installation method assumes Ruby + Rails are installed on your local machin
 
 10. Login to the web interface http://localhost:3000 with the account you setup in ws.rake, and visit `/settings` (click the drop-down menu in the top-right and choose "Settings"). Update the Site settings with your preferences.
 
+### Restoring from an Existing Instance
+Assuming you have access to a running instance of workshops and you want to
+clone or recreate it, the instructions below should take you from a database
+dump and copy of any local assets to an instance you can log in to. Once logged
+in you should evaluate as much functionality as you can to determine any
+additional steps required before deprecating the first instance. These
+instructions assume you have completed steps 1 and 2 for the recommended docker
+and postgresql install (above).
+
+1. Copy your database backup to a docker accessible location and prepare to add
+   it to the db container as a volume
+   ```bash
+   $ mkdir -p ./db/backups
+   $ cp db_workshops.sql ./db/backups
+   $ vi docker-compose.yml
+     ...
+     - pgdata:/var/lib/postgresql/data
+   + - ./db/backups:/var/backups
+     ...
+1. Copy any assets from the old instance to `app/assets`. We copy the image
+   assets below, but you may find other assets referenced in your configuration,
+   those should be copied in the same way. You may also need to update
+   permissions on the resulting files and directories
+   ```bash
+   $ rm -rf app/assets/images
+   $ cp $OLD_APP/app/assets/images app/assets/images
+   ```
+   
+1. In the default configuration startup will initialize the database we want to
+   restore. We can connect and re-initialize it manually (see
+   `./db/pg-init/init-user.sh`).
+   ```bash
+   $ docker-compose up -d db
+   $ docker-compose exec -u postgres db psql
+   psql> DROP DATABASE workshops_development;
+   psql> CREATE DATABASE workshops_development OWNER wsuser ENCODING 'UTF8' LC_COLLATE='en_US.utf8' LC_CTYPE='en_US.utf8';
+   psql> GRANT ALL PRIVILEGES ON DATABASE workshops_development to wsuser;
+   psql> \q
+   ```
+   If for some reason you have already started the workshops component, it will
+   have an active session against this database which might prevent you from
+   `DROP`ing it. If so, you can try
+   ```bash
+   SELECT
+        pg_terminate_backend(pid)
+   FROM
+       pg_stat_activity
+   WHERE
+       -- don't kill my own connection!
+       pid <> pg_backend_pid()
+       -- don't kill the connections to other databases
+       AND datname = 'workshops_development';
+   ```
+   before the `DROP`.
+1. Restore the database from the dump file
+   ```bash
+   $ docker-compose exec -u postgres db bash
+   $ psql -f /var/backups/db_workshops.sql workshops_development
+   $ exit
+   ```
+1. Bring up the remaining workshops components. Depending on the build steps,
+   this make take a long time.
+   ```bash
+   $ docker-compose up -d
+   ```
+1. You may have some pending migrations to run 
+   ```bash
+   $ docker-compose exec web bash
+   $ ./bin/rails db:migrate RAILS_ENV=development
+   ```
+1. If necessary (i.e. if you don't remember one of the admin accounts), use the
+   workshops rails interface to reset the user password for the admin user.
+   Below we are assuming you know the email address of an admin account on the
+   instance you are migrating. If not, you can search by privilege level to find
+   the account and then apply the same password update steps
+   (`User.find_by_role('super_admin')`).
+   ```bash
+   $ docker-compose exec web bash
+   # rails 
+   > u = User.find_by_email('sysadmin@example.com')
+   > u.password = 'Some Funky New Password!"
+   > u.save
+   ```
+You can now try logging in to the workshops interface on `http://127.0.0.1`.
+
+
+
+
 ### License
 Workshops is free software: you can redistribute it and/or modify it under
 the terms of the GNU Affero General Public License as published by the Free
 Software Foundation, version 3 of the License. See the [COPYRIGHT](COPYRIGHT)
 file for details and exceptions.
+

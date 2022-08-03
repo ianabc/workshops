@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+source /etc/profile.d/rvm.sh
+
 echo
 echo "Welcome to OS:"
 uname -v
@@ -33,14 +35,14 @@ yarn --version
 echo
 echo "Installing latest bundler..."
 /usr/local/rvm/bin/rvm-exec 2.7.6 gem install bundler
-# /usr/local/rvm/bin/rvm-exec 2.7.4 bundle _2.1.4_ update --bundler
-# /usr/local/rvm/bin/rvm-exec 2.7.4 gem update --system
-# /usr/local/rvm/bin/rvm-exec 2.7.4 gem install rubygems-bundler
+# /usr/local/rvm/bin/rvm-exec 2.7.6 bundle _2.1.4_ update --bundler
+# /usr/local/rvm/bin/rvm-exec 2.7.6 gem update --system
+# /usr/local/rvm/bin/rvm-exec 2.7.6 gem install rubygems-bundler
 
 # when updating Rails
 # echo
 # echo "Bundle update rails..."
-# RAILS_ENV=production /usr/local/rvm/bin/rvm-exec 2.7.4 bundle update rails
+# RAILS_ENV=production /usr/local/rvm/bin/rvm-exec 2.7.6 bundle update rails
 
 
 echo
@@ -50,9 +52,9 @@ RAILS_ENV=production /usr/local/rvm/bin/rvm-exec 2.7.6 bundle install
 # updates gems to latest minor versions
 # echo
 # echo "Bundle update..."
-# RAILS_ENV=production /usr/local/rvm/bin/rvm-exec 2.7.4 bundle update
+# RAILS_ENV=production /usr/local/rvm/bin/rvm-exec 2.7.6 bundle update
 
-if [ "$(ls -A $GEM_HOME/gems)" ]; then
+if [ ! -d "${GEM_HOME}/gems" ]; then
   echo
   echo "Gems not found in $GEM_HOME!"
   echo
@@ -95,7 +97,6 @@ echo
 echo "Checking for WebPacker..."
 if [ ! -e /home/app/workshops/bin/webpack ]; then
   echo "Installing webpacker..."
-  #RAILS_ENV=production /usr/local/rvm/bin/rvm-exec 2.7.4 bundle exec rails webpacker:install
   RAILS_ENV=production /usr/local/rvm/bin/rvm-exec 2.7.6 bundle exec rails webpacker:install
   echo "Done!"
   echo
@@ -104,7 +105,7 @@ fi
 echo
 echo "Compiling Assets..."
 su - app -c "cd /home/app/workshops; yarn install" # --latest"
-# su - app -c "cd /home/app/workshops; yarn upgrade"
+#su - app -c "cd /home/app/workshops; yarn upgrade"
 su - app -c "cd /home/app/workshops; RAILS_ENV=production SECRET_KEY_BASE=token bundle exec rake assets:precompile --trace"
 su - app -c "cd /home/app/workshops; yarn"
 

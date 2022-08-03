@@ -19,8 +19,8 @@ services:
     container_name: wsdb
     volumes:
       - ./db/pg-init:/docker-entrypoint-initdb.d
-    volumes:
       - pgdata:/var/lib/postgresql/data
+      # - ./db/backups:/var/backups
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=zzzzzzzzzzzzzzzz
