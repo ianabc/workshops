@@ -237,15 +237,24 @@ and postgresql install (above).
    $ docker-compose up -d db
    $ docker-compose exec -u postgres db psql
    psql> DROP DATABASE workshops_development;
-   psql> CREATE DATABASE workshops_development OWNER wsuser ENCODING 'UTF8' LC_COLLATE='en_US.utf8' LC_CTYPE='en_US.utf8';
-   psql> GRANT ALL PRIVILEGES ON DATABASE workshops_development to wsuser;
+   psql> CREATE DATABASE 
+            workshops_development
+         OWNER 
+            wsuser 
+         ENCODING 'UTF8'
+         LC_COLLATE='en_US.utf8'
+         LC_CTYPE='en_US.utf8';
+   psql> GRANT ALL PRIVILEGES ON DATABASE 
+            workshops_development
+         TO
+            wsuser;
    psql> \q
    ```
    If for some reason you have already started the workshops component, it will
    have an active session against this database which might prevent you from
    `DROP`ing it. If so, you can try
    ```bash
-   SELECT
+   psql> SELECT
         pg_terminate_backend(pid)
    FROM
        pg_stat_activity
