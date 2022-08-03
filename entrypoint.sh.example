@@ -104,7 +104,7 @@ fi
 echo
 echo "Compiling Assets..."
 su - app -c "cd /home/app/workshops; yarn install" # --latest"
-su - app -c "cd /home/app/workshops; yarn upgrade"
+# su - app -c "cd /home/app/workshops; yarn upgrade"
 su - app -c "cd /home/app/workshops; RAILS_ENV=production SECRET_KEY_BASE=token bundle exec rake assets:precompile --trace"
 su - app -c "cd /home/app/workshops; yarn"
 
