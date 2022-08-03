@@ -276,11 +276,6 @@ and postgresql install (above).
    ```bash
    $ docker-compose up -d
    ```
-1. You may have some pending migrations to run 
-   ```bash
-   $ docker-compose exec web bash
-   $ ./bin/rails db:migrate RAILS_ENV=development
-   ```
 1. If necessary (i.e. if you don't remember one of the admin accounts), use the
    workshops rails interface to reset the user password for the admin user.
    Below we are assuming you know the email address of an admin account on the
@@ -289,7 +284,7 @@ and postgresql install (above).
    (`User.find_by_role('super_admin')`).
    ```bash
    $ docker-compose exec web bash
-   # rails 
+   $ rails c
    > u = User.find_by_email('sysadmin@example.com')
    > u.password = 'Some Funky New Password!"
    > u.save
