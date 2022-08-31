@@ -211,6 +211,11 @@ additional steps required before deprecating the first instance. These
 instructions assume you have completed steps 1 and 2 for the recommended docker
 and postgresql install (above).
 
+1. If you intend to use the accounts restored by this process, make sure you
+   have configured the `SECRET_*` and `DEVISE_*` environment variables in the
+   docker-compose.yml file. One or more of them is involved in password hashing
+   so they need to be consistent with the production values if you want to log
+   in with accounts defined in the production instance.
 1. Copy your database backup to a docker accessible location and prepare to add
    it to the db container as a volume
    ```bash
@@ -276,7 +281,10 @@ and postgresql install (above).
    ```bash
    $ docker-compose up -d
    ```
-1. If necessary (i.e. if you don't remember one of the admin accounts), use the
+1. For existing accounts to be able to authenticate, make sure you have
+   configured the `DEVISE_*` and `SECRET_*` tokens in docker-compose.yml, one or
+   more of them is involved in the password hashing step. If necessary (i.e. if
+   you don't remember one of the admin accounts), use the
    workshops rails interface to reset the user password for the admin user.
    Below we are assuming you know the email address of an admin account on the
    instance you are migrating. If not, you can search by privilege level to find
